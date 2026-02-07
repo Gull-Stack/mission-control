@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mission Control | GullStack</title>
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-tertiary: #1a1a25;
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.3);
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border: #2a2a3a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .nav-item .icon {
+      font-size: 18px;
+    }
+
+    /* Agent Status */
+    .agent-status {
+      margin-top: auto;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .agent-card {
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .agent-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .agent-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .agent-avatar.donald {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .agent-avatar.melvin {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+    }
+
+    .agent-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .agent-status-badge {
+      margin-left: auto;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .agent-status-badge.online {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--success);
+    }
+
+    .agent-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Main Content */
+    .main-content {
+      padding: 24px 32px;
+      overflow-y: auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Search Bar */
+    .search-container {
+      position: relative;
+      width: 400px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    /* View Tabs */
+    .view-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      background: var(--bg-secondary);
+      padding: 6px;
+      border-radius: 10px;
+      width: fit-content;
+    }
+
+    .view-tab {
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      border: none;
+      background: transparent;
+    }
+
+    .view-tab:hover {
+      color: var(--text-primary);
+    }
+
+    .view-tab.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Activity Feed */
+    .activity-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .activity-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      gap: 16px;
+      transition: all 0.2s;
+    }
+
+    .activity-item:hover {
+      border-color: var(--accent);
+      transform: translateX(4px);
+    }
+
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .activity-icon.code { background: rgba(99, 102, 241, 0.2); }
+    .activity-icon.file { background: rgba(34, 197, 94, 0.2); }
+    .activity-icon.search { background: rgba(245, 158, 11, 0.2); }
+    .activity-icon.message { background: rgba(236, 72, 153, 0.2); }
+    .activity-icon.deploy { background: rgba(6, 182, 212, 0.2); }
+    .activity-icon.cron { background: rgba(168, 85, 247, 0.2); }
+
+    .activity-content {
+      flex: 1;
+    }
+
+    .activity-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .activity-description {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .activity-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .activity-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .activity-agent {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .activity-agent.donald {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+    }
+
+    .activity-agent.melvin {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+
+    /* Calendar View */
+    .calendar-container {
+      display: none;
+    }
+
+    .calendar-container.active {
+      display: block;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .calendar-nav button {
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .calendar-nav button:hover {
+      border-color: var(--accent);
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+    }
+
+    .calendar-day-header {
+      text-align: center;
+      padding: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .calendar-day {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      min-height: 120px;
+      padding: 12px;
+    }
+
+    .calendar-day.today {
+      border-color: var(--accent);
+    }
+
+    .calendar-date {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .calendar-date.today {
+      color: var(--accent);
+    }
+
+    .calendar-task {
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 12px;
+      margin-bottom: 6px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .calendar-task.heartbeat {
+      border-left-color: var(--warning);
+    }
+
+    .calendar-task.cron {
+      border-left-color: #8b5cf6;
+    }
+
+    /* Search Results */
+    .search-results {
+      display: none;
+    }
+
+    .search-results.active {
+      display: block;
+    }
+
+    .search-result-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .search-result-item:hover {
+      border-color: var(--accent);
+    }
+
+    .search-result-type {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .search-result-type.memory { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+    .search-result-type.file { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    .search-result-type.task { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+    .search-result-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .search-result-snippet {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .search-result-snippet mark {
+      background: rgba(99, 102, 241, 0.3);
+      color: var(--text-primary);
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .stat-change {
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .stat-change.positive { color: var(--success); }
+    .stat-change.negative { color: var(--error); }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 1024px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        display: none;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">🦅</div>
+        <span class="logo-text">Mission Control</span>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-label">Views</div>
+        <div class="nav-item active" onclick="showView('activity')">
+          <span class="icon">📋</span>
+          Activity Feed
+        </div>
+        <div class="nav-item" onclick="showView('calendar')">
+          <span class="icon">📅</span>
+          Calendar
+        </div>
+        <div class="nav-item" onclick="showView('search')">
+          <span class="icon">🔍</span>
+          Global Search
+        </div>
+      </nav>
+
+      <nav class="nav-section">
+        <div class="nav-label">Quick Links</div>
+        <div class="nav-item" onclick="window.open('https://loverescue.app', '_blank')">
+          <span class="icon">💕</span>
+          LoveRescue
+        </div>
+        <div class="nav-item" onclick="window.open('https://supertool-app.vercel.app', '_blank')">
+          <span class="icon">⚡</span>
+          SuperTool
+        </div>
+        <div class="nav-item" onclick="window.open('https://gullstack.com', '_blank')">
+          <span class="icon">🏢</span>
+          GullStack
+        </div>
+      </nav>
+
+      <div class="agent-status">
+        <div class="nav-label">Agents</div>
+        <div class="agent-card">
+          <div class="agent-header">
+            <div class="agent-avatar donald">🦁</div>
+            <span class="agent-name">Donald Jay</span>
+            <span class="agent-status-badge online">Online</span>
+          </div>
+          <div class="agent-stats">
+            <span>Today: <strong id="donald-today">--</strong></span>
+            <span>Total: <strong id="donald-total">--</strong></span>
+          </div>
+        </div>
+        <div class="agent-card">
+          <div class="agent-header">
+            <div class="agent-avatar melvin">🤖</div>
+            <span class="agent-name">Melvin</span>
+            <span class="agent-status-badge online">Online</span>
+          </div>
+          <div class="agent-stats">
+            <span>Today: <strong id="melvin-today">--</strong></span>
+            <span>Total: <strong id="melvin-total">--</strong></span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="header">
+        <h1>Mission Control</h1>
+        <div class="header-actions">
+          <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" placeholder="Search memories, docs, tasks..." id="globalSearch" onkeyup="handleSearch(event)">
+          </div>
+        </div>
+      </header>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Actions Today</div>
+          <div class="stat-value" id="stat-today">--</div>
+          <div class="stat-change positive" id="stat-today-change"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">This Week</div>
+          <div class="stat-value" id="stat-week">--</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Scheduled Tasks</div>
+          <div class="stat-value" id="stat-scheduled">--</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Files Modified</div>
+          <div class="stat-value" id="stat-files">--</div>
+        </div>
+      </div>
+
+      <!-- View Tabs -->
+      <div class="view-tabs">
+        <button class="view-tab active" onclick="showView('activity')">Activity Feed</button>
+        <button class="view-tab" onclick="showView('calendar')">Calendar</button>
+        <button class="view-tab" onclick="showView('search')">Search Results</button>
+      </div>
+
+      <!-- Activity Feed View -->
+      <div id="activity-view" class="activity-feed">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          Loading activity...
+        </div>
+      </div>
+
+      <!-- Calendar View -->
+      <div id="calendar-view" class="calendar-container">
+        <div class="calendar-header">
+          <h2 id="calendar-month">February 2026</h2>
+          <div class="calendar-nav">
+            <button onclick="prevWeek()">← Prev</button>
+            <button onclick="nextWeek()">Next →</button>
+          </div>
+        </div>
+        <div class="calendar-grid" id="calendar-grid">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+
+      <!-- Search Results View -->
+      <div id="search-view" class="search-results">
+        <div class="empty-state">
+          <div class="empty-state-icon">🔍</div>
+          <p>Enter a search term to find memories, documents, and tasks</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Data URLs - these will be loaded from local JSON files
+    const ACTIVITY_FILE = 'activity-feed.json';
+    const CRON_FILE = 'scheduled-tasks.json';
+
+    let currentView = 'activity';
+    let activityData = [];
+    let cronData = [];
+    let currentWeekStart = getWeekStart(new Date());
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadActivityFeed();
+      loadScheduledTasks();
+    });
+
+    // View switching
+    function showView(view) {
+      currentView = view;
+      
+      // Update nav
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      document.querySelectorAll('.view-tab').forEach(tab => tab.classList.remove('active'));
+      
+      // Show correct view
+      document.getElementById('activity-view').style.display = view === 'activity' ? 'flex' : 'none';
+      document.getElementById('calendar-view').className = view === 'calendar' ? 'calendar-container active' : 'calendar-container';
+      document.getElementById('search-view').className = view === 'search' ? 'search-results active' : 'search-results';
+      
+      // Update active states
+      document.querySelectorAll(`.nav-item`)[view === 'activity' ? 0 : view === 'calendar' ? 1 : 2].classList.add('active');
+      document.querySelectorAll(`.view-tab`)[view === 'activity' ? 0 : view === 'calendar' ? 1 : 2].classList.add('active');
+      
+      if (view === 'calendar') {
+        renderCalendar();
+      }
+    }
+
+    // Load activity feed
+    async function loadActivityFeed() {
+      try {
+        const response = await fetch(ACTIVITY_FILE);
+        if (response.ok) {
+          activityData = await response.json();
+          renderActivityFeed();
+          updateStats();
+        } else {
+          showSampleData();
+        }
+      } catch (e) {
+        showSampleData();
+      }
+    }
+
+    // Load scheduled tasks
+    async function loadScheduledTasks() {
+      try {
+        const response = await fetch(CRON_FILE);
+        if (response.ok) {
+          cronData = await response.json();
+          document.getElementById('stat-scheduled').textContent = cronData.length;
+        }
+      } catch (e) {
+        cronData = [];
+      }
+    }
+
+    // Render activity feed
+    function renderActivityFeed() {
+      const container = document.getElementById('activity-view');
+      
+      if (activityData.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <p>No activity recorded yet</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = activityData.slice(0, 50).map(activity => `
+        <div class="activity-item">
+          <div class="activity-icon ${activity.type}">${getActivityIcon(activity.type)}</div>
+          <div class="activity-content">
+            <div class="activity-title">${escapeHtml(activity.title)}</div>
+            <div class="activity-description">${escapeHtml(activity.description)}</div>
+            <div class="activity-meta">
+              <span class="activity-agent ${activity.agent}">${activity.agent === 'donald' ? '🦁 Donald' : '🤖 Melvin'}</span>
+              <span>🕐 ${formatTime(activity.timestamp)}</span>
+              ${activity.file ? `<span>📁 ${activity.file}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Show sample data for demo
+    function showSampleData() {
+      activityData = [
+        { id: 1, type: 'deploy', title: 'Deployed LoveRescue', description: 'Moved domain to React app, deleted old landing project, renamed Vercel project to loverescue-app', agent: 'donald', timestamp: new Date().toISOString(), file: 'loverescue.app' },
+        { id: 2, type: 'code', title: 'Fixed ESLint errors', description: 'Resolved malformed eslint-disable comments in 3 files blocking deployment', agent: 'donald', timestamp: new Date(Date.now() - 3600000).toISOString(), file: 'love-rescue/frontend' },
+        { id: 3, type: 'file', title: 'Configured Stripe webhooks', description: 'Added webhook endpoints for SuperTool and LoveRescue, configured signing secrets in Railway', agent: 'donald', timestamp: new Date(Date.now() - 7200000).toISOString() },
+        { id: 4, type: 'search', title: 'Researched LinkedIn automation', description: 'Found and configured EasyApplyBot for automated job applications', agent: 'donald', timestamp: new Date(Date.now() - 10800000).toISOString() },
+        { id: 5, type: 'message', title: 'Sent status update', description: 'Provided QA report for LoveRescue deployment', agent: 'donald', timestamp: new Date(Date.now() - 14400000).toISOString() },
+      ];
+      renderActivityFeed();
+      updateStats();
+    }
+
+    // Update stats
+    function updateStats() {
+      const today = new Date().toDateString();
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      
+      const todayCount = activityData.filter(a => new Date(a.timestamp).toDateString() === today).length;
+      const weekCount = activityData.filter(a => new Date(a.timestamp) > weekAgo).length;
+      const filesCount = new Set(activityData.filter(a => a.file).map(a => a.file)).size;
+      
+      document.getElementById('stat-today').textContent = todayCount;
+      document.getElementById('stat-week').textContent = weekCount;
+      document.getElementById('stat-files').textContent = filesCount;
+      
+      // Agent stats
+      const donaldToday = activityData.filter(a => a.agent === 'donald' && new Date(a.timestamp).toDateString() === today).length;
+      const donaldTotal = activityData.filter(a => a.agent === 'donald').length;
+      const melvinToday = activityData.filter(a => a.agent === 'melvin' && new Date(a.timestamp).toDateString() === today).length;
+      const melvinTotal = activityData.filter(a => a.agent === 'melvin').length;
+      
+      document.getElementById('donald-today').textContent = donaldToday;
+      document.getElementById('donald-total').textContent = donaldTotal;
+      document.getElementById('melvin-today').textContent = melvinToday;
+      document.getElementById('melvin-total').textContent = melvinTotal;
+    }
+
+    // Calendar functions
+    function getWeekStart(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day;
+      return new Date(d.setDate(diff));
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const today = new Date().toDateString();
+      
+      // Header
+      let html = days.map(d => `<div class="calendar-day-header">${d}</div>`).join('');
+      
+      // Days
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(currentWeekStart);
+        date.setDate(date.getDate() + i);
+        const isToday = date.toDateString() === today;
+        const dateStr = date.toDateString();
+        
+        // Find tasks for this day
+        const dayTasks = cronData.filter(task => {
+          // Simple matching - would need proper cron parsing for real implementation
+          return true; // Show all tasks for now
+        });
+        
+        html += `
+          <div class="calendar-day ${isToday ? 'today' : ''}">
+            <div class="calendar-date ${isToday ? 'today' : ''}">${date.getDate()}</div>
+            ${dayTasks.slice(0, 3).map(task => `
+              <div class="calendar-task ${task.type || 'cron'}">${task.name || 'Scheduled Task'}</div>
+            `).join('')}
+          </div>
+        `;
+      }
+      
+      grid.innerHTML = html;
+      
+      // Update month header
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      document.getElementById('calendar-month').textContent = `${monthNames[currentWeekStart.getMonth()]} ${currentWeekStart.getFullYear()}`;
+    }
+
+    function prevWeek() {
+      currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+      renderCalendar();
+    }
+
+    function nextWeek() {
+      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+      renderCalendar();
+    }
+
+    // Search
+    function handleSearch(event) {
+      if (event.key === 'Enter') {
+        const query = document.getElementById('globalSearch').value.trim();
+        if (query) {
+          performSearch(query);
+          showView('search');
+        }
+      }
+    }
+
+    function performSearch(query) {
+      const container = document.getElementById('search-view');
+      const lowerQuery = query.toLowerCase();
+      
+      // Search through activity
+      const results = activityData.filter(a => 
+        a.title.toLowerCase().includes(lowerQuery) ||
+        a.description.toLowerCase().includes(lowerQuery) ||
+        (a.file && a.file.toLowerCase().includes(lowerQuery))
+      );
+      
+      if (results.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <p>No results found for "${escapeHtml(query)}"</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = results.map(r => `
+        <div class="search-result-item">
+          <span class="search-result-type ${r.type}">${r.type}</span>
+          <div class="search-result-title">${highlightMatch(r.title, query)}</div>
+          <div class="search-result-snippet">${highlightMatch(r.description, query)}</div>
+        </div>
+      `).join('');
+    }
+
+    // Utilities
+    function getActivityIcon(type) {
+      const icons = {
+        code: '💻',
+        file: '📄',
+        search: '🔍',
+        message: '💬',
+        deploy: '🚀',
+        cron: '⏰'
+      };
+      return icons[type] || '📋';
+    }
+
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diff = now - date;
+      
+      if (diff < 60000) return 'Just now';
+      if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+      return date.toLocaleDateString();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function highlightMatch(text, query) {
+      const escaped = escapeHtml(text);
+      const regex = new RegExp(`(${query})`, 'gi');
+      return escaped.replace(regex, '<mark>$1</mark>');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+[
+  {
+    "id": "heartbeat",
+    "name": "Heartbeat Check",
+    "type": "heartbeat",
+    "schedule": "Every 30 minutes",
+    "description": "Check HEARTBEAT.md for pending tasks",
+    "agent": "donald"
+  }
+]
